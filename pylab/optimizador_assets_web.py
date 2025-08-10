@@ -18,8 +18,7 @@ Requisitos
 Limitaciones
 -----------
 - AVIF conversion depende de ffmpeg compilado con soporte libaom/libdav1d.
-- Este script intenta usar ffmpeg si está disponible; si no, usa Pillow
-  para WebP (sin AVIF).
+- Este script intenta usar ffmpeg si está disponible; si no, usa Pillow para WebP (sin AVIF).
 
 Uso básico
 ---------
@@ -354,7 +353,7 @@ def generar_vid_var(input_root: Path, output_root: Path, src: Path, presets: Lis
     return ReporteAssets(original_path=str(src), original_size=orig_size, variants=variants)
 
 
-def process_assets(input_dir: Path, output_dir: Path, formats: List[str], sizes: List[int], video_presets: List[Tuple[str, str]], workers: int, dry_run: bool, keep_larger: bool) -> Dict:
+def procesar_assets(input_dir: Path, output_dir: Path, formats: List[str], sizes: List[int], video_presets: List[Tuple[str, str]], workers: int, dry_run: bool, keep_larger: bool) -> Dict:
     images, videos = encontrar_assets(input_dir)
     total_jobs = len(images) + len(videos)
     print(f"Found {len(images)} images and {len(videos)} videos (total jobs: {total_jobs})")
@@ -407,7 +406,7 @@ def process_assets(input_dir: Path, output_dir: Path, formats: List[str], sizes:
     return summary
 
 
-def save_report(report: Dict, path: Path):
+def guardar_reporte(report: Dict, path: Path):
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
@@ -420,13 +419,10 @@ def generate_html_snippets(report: Dict, out_path: Path):
         img_variants = [v for v in variants if v['format'].lower() not in ['mp4', 'webm', 'mov', 'avi']]
         vid_variants = [v for v in variants if v['format'].lower() in ['mp4', 'webm']]
         if img_variants:
-            # build srcset grouped by format
             by_format: Dict[str, List[Dict]] = {}
             for v in img_variants:
                 by_format.setdefault(v['format'].lower(), []).append(v)
-            # prefer webp if present
             preferred = 'webp' if 'webp' in by_format else list(by_format.keys())[0]
-            # build srcset
             srcset_items = []
             for v in sorted(by_format.get(preferred, []), key=lambda x: (x['width'] or 9999)):
                 width = v['width']
@@ -436,7 +432,6 @@ def generate_html_snippets(report: Dict, out_path: Path):
                     srcset_items.append(f"{os.path.relpath(v['path'])} 1x")
             srcset = ', '.join(srcset_items)
             lines.append('<picture>')
-            # add source for webp if exists
             for fmt, items in by_format.items():
                 src = os.path.relpath(items[-1]['path'])
                 lines.append(f"  <source type=\"image/{fmt}\" srcset=\"{srcset}\">")
@@ -493,8 +488,8 @@ def main():
 
     print(f"Entrada: {input_dir}\nSalida: {output_dir}\nFormatos: {formats}\nTamaños: {sizes}\nVideo presets: {video_presets}")
 
-    report = process_assets(input_dir, output_dir, formats, sizes, video_presets, args.workers, args.dry_run, args.keep_larger)
-    save_report(report, Path(args.report))
+    report = procesar_assets(input_dir, output_dir, formats, sizes, video_presets, args.workers, args.dry_run, args.keep_larger)
+    guardar_reporte(report, Path(args.report))
     generate_html_snippets(report, output_dir / 'snippets.html')
     print("Reporte guardado en", args.report)
     print("Snippets guardados en", str(output_dir / 'snippets.html'))
