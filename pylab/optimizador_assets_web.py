@@ -7,7 +7,7 @@ Descripción
 Script CLI en Python que analiza un directorio de assets (imágenes y videos),
 crea versiones optimizadas (WebP, AVIF si está disponible), genera tamaños
 responsive, produce snippets HTML sugeridos (srcset + lazy-loading) y un
-informe JSON/CSV con los ahorros en bytes.
+informe JSON con los ahorros en bytes.
 
 Requisitos
 ----------
